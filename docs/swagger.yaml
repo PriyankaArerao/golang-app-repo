@@ -1,0 +1,199 @@
+definitions:
+  models.Booking:
+    properties:
+      coach_id:
+        type: integer
+      id:
+        type: integer
+      start_time:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  request.CreateAvailabilityRequest:
+    properties:
+      coach_id:
+        type: integer
+      day:
+        type: string
+      end_time:
+        type: string
+      start_time:
+        type: string
+    required:
+    - coach_id
+    - day
+    - end_time
+    - start_time
+    type: object
+  request.CreateBookingRequest:
+    properties:
+      coach_id:
+        type: integer
+      datetime:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - coach_id
+    - datetime
+    - user_id
+    type: object
+  response.BookingResponse:
+    properties:
+      coach_id:
+        type: integer
+      id:
+        type: integer
+      start_time:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  response.ErrorResponse:
+    properties:
+      code:
+        type: string
+      msg:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /coaches/availability:
+    post:
+      consumes:
+      - application/json
+      description: Allows a coach to set their availability for a day of the week
+      parameters:
+      - description: Availability request
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateAvailabilityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/request.CreateAvailabilityRequest'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Create coach availability
+      tags:
+      - Coaches
+  /users/bookings:
+    get:
+      consumes:
+      - application/json
+      description: Fetch all upcoming bookings for a specific user
+      parameters:
+      - description: User ID
+        in: query
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of bookings
+          schema:
+            items:
+              $ref: '#/definitions/response.BookingResponse'
+            type: array
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get user bookings
+      tags:
+      - Bookings
+    post:
+      consumes:
+      - application/json
+      description: Allows a user to book a 30-minute slot with a coach. Prevents double
+        booking.
+      parameters:
+      - description: Booking request
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateBookingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Booking created successfully
+          schema:
+            $ref: '#/definitions/models.Booking'
+        "400":
+          description: Invalid request or validation error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: Time slot already booked
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Create a booking
+      tags:
+      - Bookings
+  /users/slots:
+    get:
+      consumes:
+      - application/json
+      description: Fetches all available 30-minute booking slots for a given coach
+        on a specific date.
+      parameters:
+      - description: Coach ID
+        in: query
+        name: coach_id
+        required: true
+        type: integer
+      - description: Date in YYYY-MM-DD format
+        in: query
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Array of available slot timestamps in RFC3339 format
+          schema:
+            items:
+              type: string
+            type: array
+        "400":
+          description: Invalid request or date format
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Availability not found for the specified coach
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get available slots for a coach
+      tags:
+      - Slots
+swagger: "2.0"
